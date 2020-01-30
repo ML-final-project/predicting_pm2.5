@@ -1,0 +1,4 @@
+data_path:
+  pm25: "/data/pm25"
+
+build_path: "analysis/build/"
