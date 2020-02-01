@@ -1,6 +1,6 @@
 data_path:
-  pm25: "/data/pm25"
-  noaa: "/data/NOAA"
-  shape: "/data/shape"
+  pm25: "../data/pm25"
+  noaa: "../data/NOAA"
+  shape: "../data/shape"
 
 build_path: "analysis/build/"
