@@ -1,4 +1,5 @@
 data_path:
-  pm25: "/data/pm25"
+  pm25: "../data/pm25"
+  temp: "../data/NOAA
 
 build_path: "analysis/build/"
