@@ -65,8 +65,7 @@ regn_month_pm25(181270024)
   
 m <- lm(daily_mean_pm_2_5_concentration~date, data = pm25_chicago)
 summary(m)
-
-
+  
   
   
   
