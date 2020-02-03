@@ -10,6 +10,7 @@ setwd("~/final_project/")
 make_path <- is_git_root$make_fix_file()
 config <- yaml.load_file(make_path("analysis/config.yml"))
 out_path <- make_path(config$build_path)
+data_out <- make_path(config$data_path$merge)
 source(str_c(config$group_code, "prelim.R"))
 
 noaa <- read_csv(make_path(config$data_path$noaa,
@@ -51,3 +52,4 @@ ggplot() +
 ggsave("pmg25_noaa_buffer.png", plot = last_plot(), path = out_path)
 
 intersections <- st_intersection(pm25_avrg, noaa)
+write.csv(intersections, str_c(data_out, "/merged_noaa_pm25.csv"))

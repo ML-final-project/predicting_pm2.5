@@ -2,7 +2,7 @@ data_path:
   pm25: "/data/pm25"
   noaa: "/data/NOAA"
   shape: "/data/shape"
-  merge: "/data/merge"
+  merge: "/data/merged"
 
 build_path: "analysis/build/"
 
