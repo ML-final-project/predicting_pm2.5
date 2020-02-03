@@ -6,7 +6,7 @@ library(ggplot2)
 library(gridExtra)
 
 setwd("~/Documents/GitHub/final_project/analysis")
-
+out_path <- make_path(config$build_path)
 
 pm25_chicago <- read_csv("~/Documents/GitHub/final_project/data/pm25/pm25_chicago_2010.csv") %>%
   set_names(to_snake_case(colnames(.))) %>%
@@ -45,8 +45,9 @@ p4 <- plot_month_pm25(181270024, "Ogden Dunes- Water Treatment Plant")
 
 #plot_month_pm25(550590019, "CHIWAUKEE PRAIRIE STATELINE")
 
-grid.arrange(p1,p2,p3,p4)
+plot <- grid.arrange(p1,p2,p3,p4)
 
+ggsave("seasonality_top_4_pm25_stations.png", plot = last_plot(), path = out_path)
 
 #doesn't work
 regn_month_pm25 <- function(xi){
