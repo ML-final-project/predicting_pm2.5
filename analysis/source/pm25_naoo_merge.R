@@ -4,6 +4,7 @@ library(tidyverse)
 library(lubridate)
 library(snakecase)
 library(sf)
+library(gganimate)
 
 setwd("~/final_project/")
 
@@ -12,6 +13,10 @@ config <- yaml.load_file(make_path("analysis/config.yml"))
 out_path <- make_path(config$build_path)
 data_out <- make_path(config$data_path$merge)
 source(str_c(config$group_code, "prelim.R"))
+
+####################################
+## plotting and intersecting data ##
+####################################
 
 noaa <- read_csv(make_path(config$data_path$noaa,
                            "Chicago2010Data.csv")) %>%
@@ -53,3 +58,61 @@ ggsave("pmg25_noaa_buffer.png", plot = last_plot(), path = out_path)
 
 intersections <- st_intersection(pm25_avrg, noaa)
 write.csv(intersections, str_c(data_out, "/merged_noaa_pm25.csv"))
+
+########################################################
+## testing correlation between pm2.5 monitoring sites ##
+########################################################
+
+pm25_filtered <- pm25_avrg %>%
+  filter(month == "01")
+
+dist <- data.frame(st_distance(pm25_filtered))
+site_names <- pm25_filtered$site_name
+colnames(dist) <- site_names
+dist_df <- dist %>%
+  mutate_all(as.numeric)
+dist_df <- dist_df %>%
+  mutate(site_names = site_names) %>%
+  select(site_names, everything())
+site_names_loop <- colnames(dist_df)[2:31]
+
+output <- list()
+for (i in site_names_loop){
+  df <- dist_df %>%
+    filter(!!ensym(i) == 0) %>%
+    select(site_names)
+  output[[i]] <- df$site_names
+}
+
+pm25_avrg %>%
+  filter(site_name %in% output$`4TH DISTRICT COURT`) %>%
+  ggplot() +
+  geom_line(aes(x = month, y = monthly_average, group = site_name))
+
+output_df <- tibble()
+for (i in site_names_loop){
+  df <- pm25_avrg %>%
+    st_set_geometry(NULL) %>%
+    filter(site_name %in% output[[i]]) %>%
+    mutate(loop = i)
+  output_df <- bind_rows(output_df, df)
+}
+
+plot_list <- list()
+for (i in site_names_loop){
+  p <- output_df %>%
+    filter(loop == i) %>%
+    ggplot() +
+    geom_line(aes(x = month, y = monthly_average, group = site_name)) +
+    labs(title = i,
+         x = "Month",
+         y = "Monthly average") +
+    theme_minimal()
+  plot_list[[i]] <- p
+}
+
+plot_list$`4TH DISTRICT COURT`
+plot_list$`CAMP LOGAN TRAILER`
+# ggsave(paste0(i, ".png"), plot = last_plot(), path = out_path)
+
+# work on exporting the plots
