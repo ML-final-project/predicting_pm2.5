@@ -98,9 +98,21 @@ for (i in site_names_loop){
   output_df <- bind_rows(output_df, df)
 }
 
-plot_list <- list()
-for (i in site_names_loop){
-  p <- output_df %>%
+#plot_list <- list()
+#for (i in site_names_loop){
+#  p <- output_df %>%
+#    filter(loop == i) %>%
+#    ggplot() +
+#    geom_line(aes(x = month, y = monthly_average, group = site_name)) +
+#    labs(title = i,
+#         x = "Month",
+#         y = "Monthly average") +
+#    theme_minimal()
+#  plot_list[[i]] <- p
+#}
+
+for (i in site_names_loop) {
+  output_df %>%
     filter(loop == i) %>%
     ggplot() +
     geom_line(aes(x = month, y = monthly_average, group = site_name)) +
@@ -108,7 +120,7 @@ for (i in site_names_loop){
          x = "Month",
          y = "Monthly average") +
     theme_minimal()
-  plot_list[[i]] <- p
+#  ggsave(paste0(to_snake_case(i), ".png"), plot = last_plot(), path = out_path)
 }
 
 plot_list$`4TH DISTRICT COURT`
