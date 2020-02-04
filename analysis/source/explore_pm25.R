@@ -1,3 +1,6 @@
+
+#rm(list=ls()) 
+
 library(readr)
 library(tidyverse)
 library(snakecase)
@@ -5,8 +8,14 @@ library(lubridate)
 library(ggplot2)
 library(gridExtra)
 
+#need to re-work so that the one-station dfs are saved...maybe not anymore...?
+#plot all of the stations 
+
 setwd("~/Documents/GitHub/final_project/analysis")
-out_path <- make_path(config$build_path)
+#make_path <- is_git_root$make_fix_file() #can't use, is_git_root???
+#config <- yaml.load_file(make_path("analysis/config.yml"))
+#out_path <- make_path(config$build_path)
+out_path <- "~/Documents/GitHub/final_project/analysis/build"
 
 pm25_chicago <- read_csv("~/Documents/GitHub/final_project/data/pm25/pm25_chicago_2010.csv") %>%
   set_names(to_snake_case(colnames(.))) %>%
@@ -22,16 +31,16 @@ pm25_chicago %>%
 
 #line plot of avg monthly pm25 for a single station
 plot_month_pm25 <- function(xi, s_name){
-one_site <- pm25_chicago%>%
-  filter(site_id == xi)
+  one_site <- pm25_chicago%>%
+    filter(site_id == xi)
 
-one_site %>%
-  group_by(month=floor_date(date, "month")) %>%
-  #https://ro-che.info/articles/2017-02-22-group_by_month_r
-  summarize(mean_pm25 = mean(daily_mean_pm_2_5_concentration)) %>%
+  one_site %>%
+    group_by(month=floor_date(date, "month")) %>%
+    #https://ro-che.info/articles/2017-02-22-group_by_month_r
+    summarize(mean_pm25 = mean(daily_mean_pm_2_5_concentration)) %>%
   ggplot() +
-  geom_line(aes(x=month, y = mean_pm25))+
-  labs(title = s_name)
+    geom_line(aes(x=month, y = mean_pm25))+
+    labs(title = s_name)
 }
 
 
@@ -47,7 +56,35 @@ p4 <- plot_month_pm25(181270024, "Ogden Dunes- Water Treatment Plant")
 
 plot <- grid.arrange(p1,p2,p3,p4)
 
-ggsave("seasonality_top_4_pm25_stations.png", plot = last_plot(), path = out_path)
+ggsave("seasonality_top_4_pm25_stations.png", plot, path = out_path)
+
+
+site_ids <- data.frame(unique(pm25_chicago$site_id))
+plot_list <- c()
+#myplots <- vector('list', ncol(pm25_chicago)) #not sure about the length arg
+
+#myplots <- lapply(colnames(pm25_chicago$site_id), plot_month_pm25, data = pm25_chicago)
+
+#site_ids[3,1]
+
+
+for (i in 1:3){
+  plot_i <- plot_month_pm25(site_ids[i,1], i)
+  #plot_month_pm25(site_ids[i,1], i) #whoops, uncommented wrong one!
+  append(plot_list, plot_i) 
+}
+
+#https://stackoverflow.com/questions/31993704/storing-ggplot-objects-in-a-list-from-within-loop-in-r
+
+grid.arrange(plot_list[1])
+
+for (i in site_ids){
+  print(i)
+}
+
+
+
+
 
 #doesn't work
 regn_month_pm25 <- function(xi){
