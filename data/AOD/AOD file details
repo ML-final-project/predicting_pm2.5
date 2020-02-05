@@ -1,0 +1,2 @@
+AOD files contain optical penetration depth for two wavelengths of light (470nm and 550 nm). The data was not collected daily
+by the MODIS satellite and contained days where data was not available. These blank days were removed from the dataset.
