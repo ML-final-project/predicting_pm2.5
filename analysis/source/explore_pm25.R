@@ -1,5 +1,5 @@
 
-#rm(list=ls()) 
+rm(list=ls()) 
 
 library(readr)
 library(tidyverse)
@@ -59,28 +59,35 @@ plot <- grid.arrange(p1,p2,p3,p4)
 ggsave("seasonality_top_4_pm25_stations.png", plot, path = out_path)
 
 
-site_ids <- data.frame(unique(pm25_chicago$site_id))
+site_ids <- data.frame(unique(pm25_chicago$site_id))  #should put in a fn to clean the envi....
 plot_list <- c()
-#myplots <- vector('list', ncol(pm25_chicago)) #not sure about the length arg
+myplots <- vector('list', ncol(pm25_chicago)) #not sure about the length arg
 
 #myplots <- lapply(colnames(pm25_chicago$site_id), plot_month_pm25, data = pm25_chicago)
 
 #site_ids[3,1]
 
 
-for (i in 1:3){
-  plot_i <- plot_month_pm25(site_ids[i,1], i)
+for (i in 1:2){
+  #plot_i <- plot_month_pm25(site_id[i,1], i)
   #plot_month_pm25(site_ids[i,1], i) #whoops, uncommented wrong one!
-  append(plot_list, plot_i) 
+  #append(plot_list, plot_i) 
+  myplots[[i]] <- local({
+    pi <- plot_month_pm25(site_ids[i,1], site_ids[i,1])
+    print(pi)
+  })
 }
-
+plot_i
 #https://stackoverflow.com/questions/31993704/storing-ggplot-objects-in-a-list-from-within-loop-in-r
 
-grid.arrange(plot_list[1])
-
-for (i in site_ids){
-  print(i)
+p <- list()
+for(i in 1:30){
+  p[[i]] <- plot_month_pm25(site_ids[i,1], site_ids[i,1])
 }
+big_plot <- do.call(grid.arrange,p)
+
+ggsave("seasonality_pm25_stations_all.png", big_plot, path = out_path)
+
 
 
 
