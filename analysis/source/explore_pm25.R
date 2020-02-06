@@ -40,10 +40,10 @@ plot_month_pm25 <- function(xi, s_name){
     summarize(mean_pm25 = mean(daily_mean_pm_2_5_concentration)) %>%
   ggplot() +
     geom_line(aes(x=month, y = mean_pm25))+
-    labs(title = s_name)+
-    theme(plot.title = element_text(size = 6),
-          axis.title = element_text(size=5),
-          axis.text = element_text(size=5))
+    labs(title = s_name)#+
+    #theme(plot.title = element_text(size = 8),
+     #     axis.title = element_text(size=7),
+      #    axis.text = element_text(size=7))
   #theme(
     #legend.position="none",
     #line = element_blank(),
@@ -82,7 +82,7 @@ big_plot <- do.call(grid.arrange,p)
 
 #https://stackoverflow.com/questions/9315611/grid-of-multiple-ggplot2-plots-which-have-been-made-in-a-for-loop
 
-ggsave("seasonality_pm25_stations_all.png", big_plot, height = 20, width = 30, path = out_path)
+ggsave("seasonality_pm25_stations_all.png", big_plot, height = 30, width = 49, path = out_path)
 
 
 
