@@ -40,7 +40,18 @@ plot_month_pm25 <- function(xi, s_name){
     summarize(mean_pm25 = mean(daily_mean_pm_2_5_concentration)) %>%
   ggplot() +
     geom_line(aes(x=month, y = mean_pm25))+
-    labs(title = s_name)
+    labs(title = s_name)+
+    theme(plot.title = element_text(size = 6),
+          axis.title = element_text(size=5),
+          axis.text = element_text(size=5))
+  #theme(
+    #legend.position="none",
+    #line = element_blank(),
+    #rect = element_blank(),
+    #axis.text = element_blank(),
+    #axis.title = element_blank(),
+    #panel.grid.major = element_line(colour = "transparent")
+  #)
 }
 
 
@@ -52,6 +63,8 @@ p3 <- plot_month_pm25(170311016, "VILLAGE HALL")
 
 p4 <- plot_month_pm25(181270024, "Ogden Dunes- Water Treatment Plant")
 
+#ggarrange(p1 + rremove("axis.title"), p2)
+
 #plot_month_pm25(550590019, "CHIWAUKEE PRAIRIE STATELINE")
 
 plot <- grid.arrange(p1,p2,p3,p4)
@@ -60,57 +73,18 @@ ggsave("seasonality_top_4_pm25_stations.png", plot, path = out_path)
 
 
 site_ids <- data.frame(unique(pm25_chicago$site_id))  #should put in a fn to clean the envi....
-plot_list <- c()
-myplots <- vector('list', ncol(pm25_chicago)) #not sure about the length arg
-
-#myplots <- lapply(colnames(pm25_chicago$site_id), plot_month_pm25, data = pm25_chicago)
-
-#site_ids[3,1]
-
-
-for (i in 1:2){
-  #plot_i <- plot_month_pm25(site_id[i,1], i)
-  #plot_month_pm25(site_ids[i,1], i) #whoops, uncommented wrong one!
-  #append(plot_list, plot_i) 
-  myplots[[i]] <- local({
-    pi <- plot_month_pm25(site_ids[i,1], site_ids[i,1])
-    print(pi)
-  })
-}
-plot_i
-#https://stackoverflow.com/questions/31993704/storing-ggplot-objects-in-a-list-from-within-loop-in-r
-
 p <- list()
+
 for(i in 1:30){
   p[[i]] <- plot_month_pm25(site_ids[i,1], site_ids[i,1])
 }
 big_plot <- do.call(grid.arrange,p)
 
-ggsave("seasonality_pm25_stations_all.png", big_plot, path = out_path)
+#https://stackoverflow.com/questions/9315611/grid-of-multiple-ggplot2-plots-which-have-been-made-in-a-for-loop
+
+ggsave("seasonality_pm25_stations_all.png", big_plot, height = 20, width = 30, path = out_path)
 
 
 
-
-
-
-#doesn't work
-regn_month_pm25 <- function(xi){
-  one_site <- pm25_chicago%>%
-    filter(site_id == xi)
-  one_site %>%
-    group_by(month=floor_date(date, "month")) %>%
-    #https://ro-che.info/articles/2017-02-22-group_by_month_r
-    summarize(mean_pm25 = mean(daily_mean_pm_2_5_concentration)) %>%
-    
-    lin_model <- lm(mean_pm25~month)
-    summary(lin_model)
-}
-regn_month_pm25(181270024)
-
-  
-m <- lm(daily_mean_pm_2_5_concentration~date, data = pm25_chicago)
-summary(m)
-  
-  
   
   
