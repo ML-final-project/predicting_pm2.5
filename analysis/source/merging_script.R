@@ -17,21 +17,63 @@ source(str_c(config$group_code, "prelim.R"))
 ####################################
 ## plotting and intersecting data ##
 ####################################
+noaa_weather <- read_csv(make_path(config$data_path$noaa,
+                                   "Chicago2010DailyWeather.csv")) %>%
+  set_names(to_snake_case(colnames(.))) %>%
+  rename(site_name = station_name) %>%
+  mutate(date = ymd(date)) %>%
+  mutate(month = floor_date(date, unit = "month")) %>%
+  separate(month, into = c("rm", "month", "rm1"), sep = "-") %>%
+  select(-c(rm, rm1)) %>%
+  group_by(month, site_name) %>%
+  summarise(elevation = mean(elevation),
+            dly_tavg_normal = mean(dly_tavg_normal),
+            dly_dutr_normal = mean(dly_dutr_normal),
+            dly_tmax_normal = mean(dly_tmax_normal),
+            dly_tmin_normal = mean(dly_tmin_normal),
+            dly_tavg_stddev = mean(dly_tavg_stddev),
+            dly_dutr_stddev = mean(dly_dutr_stddev),
+            dly_tmax_stddev = mean(dly_tmax_stddev),
+            dly_tmin_stddev = mean(dly_tmin_stddev))
 
 noaa <- read_csv(make_path(config$data_path$noaa,
                            "Chicago2010Data.csv")) %>%
   set_names(to_snake_case(colnames(.))) %>%
   st_as_sf(coords = c("longitude", "latitude"),
            crs = 4326, remove = FALSE) %>%
-  st_transform("+proj=utm +zone=42N +datum=WGS84 +units=km")
+  st_transform("+proj=utm +zone=42N +datum=WGS84 +units=km") %>%
+  rename(site_name = name,
+         month = date) %>%
+  mutate(site_name = str_replace(site_name, ",", ""))
+
+noaa_merge <- left_join(noaa, noaa_weather, by = c("site_name", "month"))
 
 pm25 <- read_csv(make_path(config$data_path$pm25,
                            "pm25_chicago_2010.csv")) %>%
   set_names(to_snake_case(colnames(.))) %>%
   st_as_sf(coords = c("site_longitude", "site_latitude"),
            crs = 4326, remove = FALSE) %>%
-  st_transform("+proj=utm +zone=42N +datum=WGS84 +units=km") %>%
+  st_transform("+proj=utm +zone=42N +datum=WGS84 +units=km") #%>%
   st_buffer(15) # 15km
+
+
+min.col <- function(m, ...) max.col(-m, ...)
+pm25$closest <- st_distance(pm25, noaa_merge) %>% min.col(.)
+
+merged <- pm25 %>%
+  left_join(
+    noaa_merge %>% mutate(row_num = row_number()) %>% st_set_geometry(NULL),
+    by = c("closest" = "row_num"))
+
+write.csv(merged, str_c(data_out, "/merge_closest_noaa_to_each_pm25.csv"))
+
+reg_vars <- merged %>%
+  select(contains("mly_")) %>%
+  st_set_geometry(NULL) %>%
+  names() %>%
+  paste(collapse = " + ")
+
+summary(lm(as.formula(paste0("daily_mean_pm_2_5_concentration ~ ", reg_vars)) , data = merged))
 
 pm25_avrg <- pm25 %>%
   mutate(date = mdy(date)) %>%
@@ -58,6 +100,32 @@ ggsave("pmg25_noaa_buffer.png", plot = last_plot(), path = out_path)
 
 intersections <- st_intersection(pm25_avrg, noaa)
 write.csv(intersections, str_c(data_out, "/merged_noaa_pm25.csv"))
+
+######################
+## merging aod data ##
+######################
+
+aod_047 <- read_csv(make_path(config$data_path$aod,
+                   "ChicagoOpticalDepth2010_047nm_line.csv"),
+                   skip = 7) %>%
+  rename(date = `\\f0\\fs24 \\cf0 date`,
+         aod_47 = `value_`,
+         county = `county\\`) %>%
+  na.omit() %>%
+  mutate(county = "Cook")
+
+aod_055 <- read_csv(make_path(config$data_path$aod,
+                              "ChicagoOpticalDepth2010_055nm_line.csv"),
+                    skip = 7) %>%
+  rename(date = `\\f0\\fs24 \\cf0 date`,
+         aod_55 = `value_`,
+         county = `county\\`) %>%
+  na.omit() %>%
+  mutate(county = "Cook")
+
+aod <- left_join(aod_047, aod_055, by = c("date", "county")) %>%
+  group_by(date) %>%
+  summarise(aod_055)
 
 ########################################################
 ## testing correlation between pm2.5 monitoring sites ##

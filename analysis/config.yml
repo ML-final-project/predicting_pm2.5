@@ -3,6 +3,7 @@ data_path:
   noaa: "/data/NOAA"
   shape: "/data/shape"
   merge: "/data/merged"
+  aod: "/data/AOD"
 
 build_path: "analysis/build/"
 
