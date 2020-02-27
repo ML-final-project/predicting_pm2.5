@@ -41,35 +41,33 @@ pm25 <- read_csv(make_path(config$data_path$pm25,
   na.omit() %>%
   select(date, site_name, daily_mean_pm_2_5_concentration)
 
-aod_047 <- read_csv(make_path(config$data_path$aod,
-                              "ChicagoOpticalDepth2010_047nm_line.csv"),
-                    skip = 7) %>%
-  rename(date = `\\f0\\fs24 \\cf0 date`,
-         aod_47 = `value_`,
-         county = `county\\`) %>%
-  na.omit() %>%
-  mutate(county = "Cook") %>%
-  group_by(date) %>%
-  mutate(aod_47 = mean(aod_47))
+pm25_sites <- distinct(pm25, site_name)
+noaa_sites <- distinct(noaa, station_name)
 
 min.col <- function(m, ...) max.col(-m, ...)
-pm25$closest <- st_distance(pm25, noaa) %>% min.col(.)
+pm25_sites$row_num <- st_distance(pm25_sites, noaa_sites) %>% min.col(.)
+
+sites <- noaa_sites %>%
+  mutate(row_num = row_number()) %>%
+  st_set_geometry(NULL) %>%
+  right_join(., pm25_sites, by = "row_num") %>%
+  select(-c(row_num, geometry))
 
 merged <- pm25 %>%
-  left_join(
-    noaa %>% mutate(row_num = row_number()) %>% st_set_geometry(NULL),
-    by = c("closest" = "row_num"), "date")
+  left_join(., sites, by = "site_name") %>%
+  st_set_geometry(NULL) %>%
+  left_join(., noaa, by = c("station_name","date")) %>%
+  select(-geometry)
 
 reg_vars <- merged %>%
   select(elevation, contains("normal")) %>%
-  st_set_geometry(NULL) %>%
   names() %>%
   paste(collapse = " + ")
 
 summary(plm(as.formula(paste0("daily_mean_pm_2_5_concentration ~ ",
                               reg_vars)),
             data = merged,
-            index = c("date.x"),
+            index = c("date"),
             model = "within",
             effect = "twoways"))
 write.csv(merged, str_c(data_out, "/merged_noaa_pm25.csv"))
@@ -79,19 +77,17 @@ write.csv(merged, str_c(data_out, "/merged_noaa_pm25.csv"))
 ##############
 
 aod_047 <- read_csv(make_path(config$data_path$aod,
-                              "ChicagoOpticalDepth2010_047nm_line.csv"),
-                    skip = 7) %>%
-  rename(date = `\\f0\\fs24 \\cf0 date`,
-         aod_47 = `value_`,
-         county = `county\\`) %>%
-  na.omit() %>%
-  mutate(county = "Cook")
+                              "2010ImputedOpticalDepth_047nm.csv"),
+                    col_names = FALSE) %>%
+  rename(date = X1,
+         aod47 = X2)
 
 aod_055 <- read_csv(make_path(config$data_path$aod,
-                              "ChicagoOpticalDepth2010_055nm_line.csv"),
-                    skip = 7) %>%
-  rename(date = `\\f0\\fs24 \\cf0 date`,
-         aod_55 = `value_`,
-         county = `county\\`) %>%
-  na.omit() %>%
-  mutate(county = "Cook")
+                              "2010ImputedOpticalDepth_055nm.csv"),
+                    col_names = FALSE) %>%
+  rename(date = X1,
+         aod55 = X2)
+
+merged_aod <- left_join(aod_047, aod_055, by = "date") %>%
+  right_join(., merged, by = "date")
+write.csv(merged_aod, str_c(data_out, "/merged_noaa_pm25_aod.csv"))
