@@ -58,18 +58,6 @@ merged <- pm25 %>%
   st_set_geometry(NULL) %>%
   left_join(., noaa, by = c("station_name","date")) %>%
   select(-geometry)
-
-reg_vars <- merged %>%
-  select(elevation, contains("normal")) %>%
-  names() %>%
-  paste(collapse = " + ")
-
-summary(plm(as.formula(paste0("daily_mean_pm_2_5_concentration ~ ",
-                              reg_vars)),
-            data = merged,
-            index = c("date"),
-            model = "within",
-            effect = "twoways"))
 write.csv(merged, str_c(data_out, "/merged_noaa_pm25.csv"))
 
 ##############
@@ -91,3 +79,18 @@ aod_055 <- read_csv(make_path(config$data_path$aod,
 merged_aod <- left_join(aod_047, aod_055, by = "date") %>%
   right_join(., merged, by = "date")
 write.csv(merged_aod, str_c(data_out, "/merged_noaa_pm25_aod.csv"))
+
+#######################
+## linear regression ##
+#######################
+
+reg_vars <- merged_aod %>%
+  select(elevation, contains("normal"), aod47, aod55) %>%
+  names() %>%
+  paste(collapse = " + ")
+
+summary(plm(as.formula(paste0("daily_mean_pm_2_5_concentration ~ ", reg_vars)),
+            data = merged_aod,
+            index = c("date"),
+            model = "within",
+            effect = "twoways"))
