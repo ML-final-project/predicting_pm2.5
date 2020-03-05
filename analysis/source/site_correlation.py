@@ -13,17 +13,20 @@ small_df = df.drop(columns = ['Unnamed: 0','aod47', 'aod55',
                               'ytd_prcp_normal', 'ytd_snow_normal', 'dly_tavg_normal',
                               'dly_dutr_normal', 'dly_tmax_normal', 'dly_tmin_normal'])
 
+#need to make site name into col name
+#and date into row
+
 #this merges duplicate (where site name and date is duplicated, these shouldn't exist but seem to)
 pm25 = small_df.pivot_table(index='date', columns='site_name', 
                             values='daily_mean_pm_2_5_concentration', 
                             aggfunc='mean')
+#cite https://hackernoon.com/reshaping-data-in-python-fa27dda2ff77
 
-#need to make site name into col name
-#and date into row
 
 #correlation table
-pm25.corr()
+correlation  = pm25.corr()
 #[30 rows x 30 columns]
+correlation.to_csv(os.path.join(PATH, 'pm25_site_correlation.csv'))
 
 #4TH DISTRICT COURT with CAMP LOGAN TRAILER
 pm25.corr().iloc[0,1]
@@ -70,4 +73,22 @@ f,ax=plt.subplots(figsize=(7,3))
 test.rolling(window=30,center=True).median().plot(ax=ax)
 ax.set(xlabel='Time',ylabel='Pearson r')
 ax.set(title=f"Overall Pearson r = {np.round(overall_pearson_r,2)}");
+'''
+###
+#failed to replicate, not working?
+
+# Set window size to compute moving window synchrony.
+r_window_size = 120
+# Interpolate missing data.
+df_interpolated = test.interpolate()
+# Compute rolling window synchrony
+rolling_r = df_interpolated['S1_Joy'].rolling(window=r_window_size, center=True).corr(df_interpolated['S2_Joy'])
+
+'''
+f,ax=plt.subplots(2,1,figsize=(14,6),sharex=True)
+df.rolling(window=30,center=True).median().plot(ax=ax[0])
+ax[0].set(xlabel='Frame',ylabel='Smiling Evidence')
+rolling_r.plot(ax=ax[1])
+ax[1].set(xlabel='Frame',ylabel='Pearson r')
+plt.suptitle("Smiling data and rolling window correlation")
 '''
