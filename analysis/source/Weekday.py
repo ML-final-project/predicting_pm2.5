@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 import datetime 
-
+import statsmodels.api as sm
 
 
 PATH = '/Users/Sarah/Documents/GitHub/final_project/data/merged'
@@ -24,6 +24,7 @@ summer = datetime.datetime(2010, 6, 21)
 #Fall (4) begins
 #Wednesday, September 22
 fall = datetime.datetime(2010, 9, 22) 
+#cite https://www.geeksforgeeks.org/comparing-dates-python/ 
 
 df['season'] = 0 
 df['date'] = pd.to_datetime(df['date'])
@@ -40,8 +41,6 @@ for i in range(len(df['date'])):
     else:
         df['season'][i] = 1 #winter
 
-i = 100
-df['date'][100] >= spring 
 
 df.to_csv(os.path.join(PATH, 'merged_plus_weekday_season.csv'))
 
