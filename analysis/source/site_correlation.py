@@ -2,8 +2,11 @@ import pandas as pd
 import numpy as np
 import scipy.stats as stats
 import os
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 PATH = '/Users/Sarah/Documents/GitHub/final_project/data/merged'
+out_path = '/Users/Sarah/Documents/GitHub/final_project/analysis/build'
 os.listdir(PATH)
 df = pd.read_csv(os.path.join(PATH,'merged_noaa_pm25_aod.csv'))
 df.columns 
@@ -24,13 +27,48 @@ pm25 = small_df.pivot_table(index='date', columns='site_name',
 
 
 #correlation table
-correlation  = pm25.corr()
+corr_tab  = pm25.corr()
 #[30 rows x 30 columns]
-correlation.to_csv(os.path.join(PATH, 'pm25_site_correlation.csv'))
+corr_tab.to_csv(os.path.join(PATH, 'pm25_site_correlation.csv'))
 
 #4TH DISTRICT COURT with CAMP LOGAN TRAILER
 pm25.corr().iloc[0,1]
 #Output:0.8578030881698346
+
+fig, ax = plt.subplots(figsize=(10,8)) 
+ax = sns.heatmap(
+    corr_tab, 
+    vmin=-1, vmax=1, center=0,
+    cmap=sns.diverging_palette(20, 220, n=200),
+    square=True
+)
+ax.set_xticklabels(
+    ax.get_xticklabels(),
+    rotation=45,
+    horizontalalignment='right',
+    fontsize=6   
+)
+ax.set_yticklabels(
+    ax.get_xticklabels(),
+    fontsize=6
+)
+ax.set_ylabel('')
+ax.set_xlabel('')
+ax.set_title("Pearson Correlation Between pm25 Sites")
+fig.tight_layout()
+plt.savefig(os.path.join(out_path, "pm25_site_corr"))
+plt.close()
+
+
+
+plt.xlabel('xlabel', fontsize=1)
+ax.labels('xtick', labelsize=8)    # fontsize of the tick labels
+ax.labels('ytick', labelsize=8)
+
+#https://towardsdatascience.com/better-heatmaps-and-correlation-matrix-plots-in-python-41445d0f2bec
+
+
+
 
 
 
