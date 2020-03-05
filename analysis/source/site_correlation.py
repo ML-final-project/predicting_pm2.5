@@ -35,29 +35,31 @@ corr_tab.to_csv(os.path.join(PATH, 'pm25_site_correlation.csv'))
 pm25.corr().iloc[0,1]
 #Output:0.8578030881698346
 
-fig, ax = plt.subplots(figsize=(10,8)) 
+fig, ax = plt.subplots(figsize=(8,6)) 
 ax = sns.heatmap(
     corr_tab, 
     vmin=-1, vmax=1, center=0,
     cmap=sns.diverging_palette(20, 220, n=200),
-    square=True
-)
-ax.set_xticklabels(
-    ax.get_xticklabels(),
-    rotation=45,
-    horizontalalignment='right',
-    fontsize=6   
-)
-ax.set_yticklabels(
-    ax.get_xticklabels(),
-    fontsize=6
-)
+    square=True)
+
+#ax.set_xticklabels(
+#    ax.get_xticklabels(),
+#    rotation=45,
+#    horizontalalignment='right',
+#    fontsize=6)  
+
+#ax.set_yticklabels(
+#    ax.get_xticklabels(),
+#    fontsize=6)
 ax.set_ylabel('')
 ax.set_xlabel('')
+ax.set_yticklabels(' ') #no ticklabels, if want them, comment out and uncomment above
+ax.set_xticklabels(' ') #same here
 ax.set_title("Pearson Correlation Between pm25 Sites")
 fig.tight_layout()
 plt.savefig(os.path.join(out_path, "pm25_site_corr"))
 plt.close()
+#plt.show()
 
 
 
