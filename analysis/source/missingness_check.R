@@ -42,3 +42,16 @@ noaa$missing_tmin = ifelse(is.na(noaa$dly_tmin_normal), 1, 0)
 t.test(noaa$missing_tmin)
 
 
+x <- as.data.frame(abs(is.na(noaa)))
+y <- x[which(sapply(x, sd) > 0)]
+missingness <- cor(y)
+#https://stats.stackexchange.com/questions/172316/a-statistical-approach-to-determine-if-data-are-missing-at-random
+corrplot(missingness, method="color")
+
+
+#maybe:
+#https://cran.r-project.org/web/packages/finalfit/vignettes/missing.html
+
+denver <- read.csv("Denver.csv")
+denver%>%
+  missing_plot()
