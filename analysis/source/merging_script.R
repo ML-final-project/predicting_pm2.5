@@ -60,6 +60,25 @@ merged <- pm25 %>%
   select(-geometry)
 write.csv(merged, str_c(data_out, "/merged_noaa_pm25.csv"))
 
+####################
+## plotting merge ##
+####################
+
+noaa_plotting <- noaa %>%
+  select(station_name, longitude, latitude) %>%
+  st_set_geometry(NULL) %>%
+  distinct()
+
+merge_plotting <- pm25 %>%
+  left_join(., sites, by = "site_name") %>%
+  left_join(., noaa_plotting, by = "station_name") %>%
+  st_transform(4326) %>%
+  distinct(site_name, station_name, longitude, latitude)
+
+ggplot(merge_plotting) +
+  geom_sf() +
+  geom_point(aes(x = longitude, y = latitude), color = "red")
+
 ##############
 ## aod data ##
 ##############
@@ -80,17 +99,34 @@ merged_aod <- left_join(aod_047, aod_055, by = "date") %>%
   right_join(., merged, by = "date")
 write.csv(merged_aod, str_c(data_out, "/merged_noaa_pm25_aod.csv"))
 
+################################################
+## adding lags and seasons/weekday indicators ##
+################################################
+
+lagmatrix <- function(x,max.lag) embed(c(rep(NA,max.lag), x), max.lag+1)
+lag_prcp <- data.frame(lagmatrix(merged_aod$mtd_prcp_normal, 1)) %>%
+  select(X2) %>%
+  rename(mtd_prcp_normal_lag1 = X2)
+lag_snow <- data.frame(lagmatrix(merged_aod$mtd_snow_normal, 1)) %>%
+  select(X2) %>%
+  rename(mtd_snow_normal_lag1 = X2)
+merge_lag <- cbind(merged_aod, lag_prcp, lag_snow)
+
 #######################
 ## linear regression ##
 #######################
 
-reg_vars <- merged_aod %>%
+reg_vars <- merge_lag %>%
   select(elevation, contains("normal"), aod47, aod55) %>%
   names() %>%
   paste(collapse = " + ")
 
 summary(plm(as.formula(paste0("daily_mean_pm_2_5_concentration ~ ", reg_vars)),
-            data = merged_aod,
+            data = merge_lag,
             index = c("date"),
-            model = "within",
+            model = "pooling",
             effect = "twoways"))
+
+# for markdown
+# library(stargazer)
+# stargazer(merge_lag)
