@@ -79,25 +79,6 @@ merged <- pm25 %>%
   rename(state = state.x)
 write.csv(merged, str_c(data_out, "/merged_all.csv"), row.names=FALSE)
 
-####################
-## plotting merge ##
-####################
-
-noaa_plotting <- noaa %>%
-  select(station_name, longitude, latitude) %>%
-  st_set_geometry(NULL) %>%
-  distinct()
-
-merge_plotting <- pm25 %>%
-  left_join(., sites, by = "site_name") %>%
-  left_join(., noaa_plotting, by = "station_name") %>%
-  st_transform(4326) %>%
-  distinct(site_name, station_name, longitude, latitude)
-
-ggplot(merge_plotting) +
-  geom_sf() +
-  geom_point(aes(x = longitude, y = latitude), color = "red")
-
 ##############
 ## aod data ##
 ##############
