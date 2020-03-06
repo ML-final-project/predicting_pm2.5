@@ -63,14 +63,44 @@ plt.close()
 
 
 
-plt.xlabel('xlabel', fontsize=1)
-ax.labels('xtick', labelsize=8)    # fontsize of the tick labels
-ax.labels('ytick', labelsize=8)
 
 #https://towardsdatascience.com/better-heatmaps-and-correlation-matrix-plots-in-python-41445d0f2bec
 
 
+all_df = df.pivot_table(index='date', columns='site_name', 
+                            values=['daily_mean_pm_2_5_concentration','elevation',
+       'latitude', 'longitude', 'mtd_prcp_normal', 'mtd_snow_normal',
+       'ytd_prcp_normal', 'ytd_snow_normal', 'dly_tavg_normal',
+       'dly_dutr_normal', 'dly_tmax_normal', 'dly_tmin_normal'], 
+                            aggfunc='mean')
 
+all_corr = all_df.corr()
+
+fig, ax = plt.subplots(figsize=(10,8)) 
+ax = sns.heatmap(
+    all_corr, 
+    vmin=-1, vmax=1, center=0,
+    cmap=sns.diverging_palette(20, 220, n=200),
+    square=True)
+
+ax.set_xticklabels(
+    ax.get_xticklabels(),
+    rotation=45,
+    horizontalalignment='right',
+    fontsize=6)  
+
+ax.set_yticklabels(
+    ax.get_xticklabels(),
+    fontsize=6)
+ax.set_ylabel('')
+ax.set_xlabel('')
+#ax.set_yticklabels(' ') #no ticklabels, if want them, comment out and uncomment above
+#ax.set_xticklabels(' ') #same here
+ax.set_title("Correlation Between Variables-Sites")
+fig.tight_layout()
+plt.savefig(os.path.join(out_path, "all_var_site_corr"))
+#plt.close()
+plt.show()
 
 
 
