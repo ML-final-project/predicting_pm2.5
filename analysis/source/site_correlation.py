@@ -7,9 +7,11 @@ import matplotlib.pyplot as plt
 
 PATH = '/Users/Sarah/Documents/GitHub/final_project/data/merged'
 out_path = '/Users/Sarah/Documents/GitHub/final_project/analysis/build'
-os.listdir(PATH)
+
 df = pd.read_csv(os.path.join(PATH,'merged_noaa_pm25_aod.csv'))
-df.columns 
+all_df = pd.read_csv(os.path.join(PATH,'merged_all.csv'))
+#df2 = pd.read_csv(os.path.join(PATH,'merged_plus_weekday_season.csv'))
+#df.columns 
 small_df = df.drop(columns = ['Unnamed: 0','aod47', 'aod55',
                               'station_name','elevation', 'latitude',
                               'longitude', 'mtd_prcp_normal', 'mtd_snow_normal',
@@ -20,52 +22,95 @@ small_df = df.drop(columns = ['Unnamed: 0','aod47', 'aod55',
 #and date into row
 
 #this merges duplicate (where site name and date is duplicated, these shouldn't exist but seem to)
-pm25 = small_df.pivot_table(index='date', columns='site_name', 
+def corro_maker(small_df):
+    pm25 = small_df.pivot_table(index='date', columns='site_name', 
                             values='daily_mean_pm_2_5_concentration', 
                             aggfunc='mean')
+    corr_tab  = pm25.corr()
+    return corr_tab
 #cite https://hackernoon.com/reshaping-data-in-python-fa27dda2ff77
 
 
 #correlation table
-corr_tab  = pm25.corr()
+#corr_tab  = pm25.corr()
 #[30 rows x 30 columns]
-corr_tab.to_csv(os.path.join(PATH, 'pm25_site_correlation.csv'))
+#corr_tab.to_csv(os.path.join(PATH, 'pm25_site_correlation.csv'))
 
 #4TH DISTRICT COURT with CAMP LOGAN TRAILER
-pm25.corr().iloc[0,1]
+#pm25.corr().iloc[0,1]
 #Output:0.8578030881698346
 
-fig, ax = plt.subplots(figsize=(8,6)) 
-ax = sns.heatmap(
-    corr_tab, 
-    vmin=-1, vmax=1, center=0,
-    cmap=sns.diverging_palette(20, 220, n=200),
-    square=True)
+def corroplot(small_df, state):
+    '''
+    takes a df of pm25 per site per date 
+    and the string of a state name (just for labeling)
+    '''
+    corr_tab = corro_maker(small_df)
+    fig, ax = plt.subplots(figsize=(8,6)) 
+    ax = sns.heatmap(
+        corr_tab, 
+        vmin=-1, vmax=1, center=0,
+        cmap=sns.diverging_palette(20, 220, n=200),
+        square=True)
 
-#ax.set_xticklabels(
-#    ax.get_xticklabels(),
-#    rotation=45,
-#    horizontalalignment='right',
-#    fontsize=6)  
+    #ax.set_xticklabels(
+    #    ax.get_xticklabels(),
+    #    rotation=45,
+    #    horizontalalignment='right',
+    #    fontsize=6)  
 
-#ax.set_yticklabels(
-#    ax.get_xticklabels(),
-#    fontsize=6)
-ax.set_ylabel('')
-ax.set_xlabel('')
-ax.set_yticklabels(' ') #no ticklabels, if want them, comment out and uncomment above
-ax.set_xticklabels(' ') #same here
-ax.set_title("Pearson Correlation Between pm25 Sites")
-fig.tight_layout()
-plt.savefig(os.path.join(out_path, "pm25_site_corr"))
-plt.close()
-#plt.show()
+    #ax.set_yticklabels(
+    #    ax.get_xticklabels(),
+    #    fontsize=6)
+    ax.set_ylabel('')
+    ax.set_xlabel('')
+    ax.set_yticklabels(' ') #no ticklabels, if want them, comment out and uncomment above
+    ax.set_xticklabels(' ') #same here
+    ax.set_title("Pearson Correlation Between pm25 Sites "+ state)
+    fig.tight_layout()
+    plt.savefig(os.path.join(out_path, "pm25_site_corr_"+state))
+    #plt.close()
+    plt.show()
+
+corroplot(small_df, "Chicago")
+
+#state-by-state
+all_df['state'].unique()
+
+
+ak = all_df[all_df['state'] == "AK"]
+ak.columns
+temp_df = ak.drop(columns = ['state',
+       'station_name', 'elevation', 'latitude', 'longitude', 'mtd_prcp_normal',
+       'mtd_snow_normal', 'ytd_prcp_normal', 'ytd_snow_normal',
+       'dly_tavg_normal', 'dly_dutr_normal', 'dly_tmax_normal',
+       'dly_tmin_normal'])
+
+corroplot(temp_df, "AK")
+
+il = all_df[all_df['state'] == "IL"]
+
+temp_df2 = il.drop(columns = ['state',
+       'station_name', 'elevation', 'latitude', 'longitude', 'mtd_prcp_normal',
+       'mtd_snow_normal', 'ytd_prcp_normal', 'ytd_snow_normal',
+       'dly_tavg_normal', 'dly_dutr_normal', 'dly_tmax_normal',
+       'dly_tmin_normal'])
+corroplot(temp_df2, "IL")
+
+for state in all_df['state'].unique():
+    il = all_df[all_df['state'] == state]
+    temp_df2 = il.drop(columns = ['state',
+       'station_name', 'elevation', 'latitude', 'longitude', 'mtd_prcp_normal',
+       'mtd_snow_normal', 'ytd_prcp_normal', 'ytd_snow_normal',
+       'dly_tavg_normal', 'dly_dutr_normal', 'dly_tmax_normal',
+       'dly_tmin_normal'])
+    corroplot(temp_df2, state) 
+
 
 
 
 
 #https://towardsdatascience.com/better-heatmaps-and-correlation-matrix-plots-in-python-41445d0f2bec
-
 
 all_df = df.pivot_table(index='date', columns='site_name', 
                             values=['daily_mean_pm_2_5_concentration','elevation',
@@ -104,6 +149,18 @@ plt.show()
 
 
 
+
+#df2.drop(columns = ['Unnamed: 0', 'Unnamed: 0.1', 'date','site_name'], inplace = True)
+#nope!
+#sns.pairplot(df2, hue = 'daily_mean_pm_2_5_concentration')
+fig, ax = plt.subplots()
+ax.scatter(x = df['date'], y = df['daily_mean_pm_2_5_concentration'])
+
+plt.scatter(x = df2["season"], y = df2['daily_mean_pm_2_5_concentration'])
+
+plt.scatter(x = df2['mtd_prcp_normal'], y = df2['daily_mean_pm_2_5_concentration'])
+
+
 ####
 #working
 ####
@@ -116,26 +173,9 @@ overall_pearson_r = test.corr().iloc[0,1]
 print(f"Pandas computed Pearson r: {overall_pearson_r}")
 # out: Pandas computed Pearson r: 0.2058774513561943
 
-#let's add a col and see what happens:
-#list(range(5400))
-test['new'] = list(range(5400))
-#Pandas computed Pearson r: 0.2058774513561943
-#unchanged!
-#In [74]: test.corr().iloc[0,2]                                                                                           
-#Out[74]: -0.3149954948945115
-#In [75]: test.corr().iloc[1,1]                                                                                           
-#Out[75]: 1.0
-#In [76]: test.corr().iloc[1,2]                                                                                           
-#Out[76]: 0.11373199295203283
-test.corr().iloc[1,2]
-
-
-
 r, p = stats.pearsonr(test.dropna()['S1_Joy'], test.dropna()['S2_Joy'])
 print(f"Scipy computed Pearson r: {r} and p-value: {p}")
 # out: Scipy computed Pearson r: 0.20587745135619354 and p-value: 3.7902989479463397e-51
-
-
 
 # Compute rolling window synchrony
 '''
@@ -162,3 +202,44 @@ rolling_r.plot(ax=ax[1])
 ax[1].set(xlabel='Frame',ylabel='Pearson r')
 plt.suptitle("Smiling data and rolling window correlation")
 '''
+
+
+
+
+
+######
+#cross-cor
+from scipy import signal
+pm25 = small_df.pivot_table(index='date', columns='site_name', 
+                            values='daily_mean_pm_2_5_concentration', 
+                            aggfunc='mean')
+pm25.columns
+pm25.shape #(365, 30)
+#np.correlate(pm25['VILLAGE HALL'], pm25['WASHINGTON HS'], "same")
+
+sig_1 = pm25['4TH DISTRICT COURT']
+sig_2 = pm25['CARY GROVE HS']
+corr = signal.correlate(sig_1, sig_2, mode = 'same')/128
+
+#replicate
+sig = np.repeat([0., 1., 1., 0., 1., 0., 0., 1.], 128)
+sig_noise = sig + np.random.randn(len(sig))
+corr = signal.correlate(sig_noise, np.ones(128), mode='same') / 128
+
+clock = np.arange(64, len(sig_1), 128)
+fig, (ax_orig, ax_noise, ax_corr) = plt.subplots(3, 1, sharex=True)
+ax_orig.plot(sig_1)
+ax_orig.plot(clock, sig_1[clock], 'ro')
+ax_orig.set_title('Original signal')
+ax_noise.plot(sig_2)
+ax_noise.set_title('Signal with noise')
+ax_corr.plot(corr)
+ax_corr.plot(clock, corr[clock], 'ro')
+ax_corr.axhline(0.5, ls=':')
+ax_corr.set_title('Cross-correlated with rectangular pulse')
+ax_orig.margins(0, 0.1)
+fig.tight_layout()
+fig.show()
+
+
+
