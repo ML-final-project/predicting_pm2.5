@@ -12,19 +12,21 @@ df = pd.read_csv(os.path.join(PATH,'merged_noaa_pm25_aod.csv'))
 all_df = pd.read_csv(os.path.join(PATH,'merged_all.csv'))
 #df2 = pd.read_csv(os.path.join(PATH,'merged_plus_weekday_season.csv'))
 #df.columns 
+df.sort_values(by=['latitude','longitude'])
 small_df = df.drop(columns = ['Unnamed: 0','aod47', 'aod55',
                               'station_name','elevation', 'latitude',
                               'longitude', 'mtd_prcp_normal', 'mtd_snow_normal',
                               'ytd_prcp_normal', 'ytd_snow_normal', 'dly_tavg_normal',
                               'dly_dutr_normal', 'dly_tmax_normal', 'dly_tmin_normal'])
 
+
 #need to make site name into col name
 #and date into row
 
 #this merges duplicate (where site name and date is duplicated, these shouldn't exist but seem to)
-def corro_maker(small_df):
+def corro_maker(small_df, variable):
     pm25 = small_df.pivot_table(index='date', columns='site_name', 
-                            values='daily_mean_pm_2_5_concentration', 
+                            values=variable, 
                             aggfunc='mean')
     corr_tab  = pm25.corr()
     return corr_tab
@@ -40,12 +42,14 @@ def corro_maker(small_df):
 #pm25.corr().iloc[0,1]
 #Output:0.8578030881698346
 
-def corroplot(small_df, state):
+def corroplot(small_df, state, variable, variable_name):
     '''
     takes a df of pm25 per site per date 
-    and the string of a state name (just for labeling)
+    the string of a state name (just for labeling)
+    the colname of variable of interest (what value is correlated between sites)
+    and the string of the variabe name (just for labeling)
     '''
-    corr_tab = corro_maker(small_df)
+    corr_tab = corro_maker(small_df,variable)
     fig, ax = plt.subplots(figsize=(8,6)) 
     ax = sns.heatmap(
         corr_tab, 
@@ -66,46 +70,52 @@ def corroplot(small_df, state):
     ax.set_xlabel('')
     ax.set_yticklabels(' ') #no ticklabels, if want them, comment out and uncomment above
     ax.set_xticklabels(' ') #same here
-    ax.set_title("Pearson Correlation Between pm25 Sites "+ state)
+    ax.set_title("Pearson Correlation Between " +variable_name+ " Sites "+ state)
     fig.tight_layout()
-    plt.savefig(os.path.join(out_path, "pm25_site_corr_"+state))
+    plt.savefig(os.path.join(out_path, variable_name+"_site_corr_"+state))
     #plt.close()
     plt.show()
 
-corroplot(small_df, "Chicago")
+#check
+corroplot(small_df, "Chicago", 'daily_mean_pm_2_5_concentration', 'pm2.5')
+
 
 #state-by-state
-all_df['state'].unique()
-
-
-ak = all_df[all_df['state'] == "AK"]
-ak.columns
-temp_df = ak.drop(columns = ['state',
-       'station_name', 'elevation', 'latitude', 'longitude', 'mtd_prcp_normal',
-       'mtd_snow_normal', 'ytd_prcp_normal', 'ytd_snow_normal',
-       'dly_tavg_normal', 'dly_dutr_normal', 'dly_tmax_normal',
-       'dly_tmin_normal'])
-
-corroplot(temp_df, "AK")
-
-il = all_df[all_df['state'] == "IL"]
-
-temp_df2 = il.drop(columns = ['state',
-       'station_name', 'elevation', 'latitude', 'longitude', 'mtd_prcp_normal',
-       'mtd_snow_normal', 'ytd_prcp_normal', 'ytd_snow_normal',
-       'dly_tavg_normal', 'dly_dutr_normal', 'dly_tmax_normal',
-       'dly_tmin_normal'])
-corroplot(temp_df2, "IL")
-
 for state in all_df['state'].unique():
     il = all_df[all_df['state'] == state]
+    il.sort_values(by=['latitude','longitude'])
     temp_df2 = il.drop(columns = ['state',
        'station_name', 'elevation', 'latitude', 'longitude', 'mtd_prcp_normal',
        'mtd_snow_normal', 'ytd_prcp_normal', 'ytd_snow_normal',
        'dly_tavg_normal', 'dly_dutr_normal', 'dly_tmax_normal',
        'dly_tmin_normal'])
-    corroplot(temp_df2, state) 
+    corroplot(temp_df2, state, 'daily_mean_pm_2_5_concentration', 'pm2.5') 
 
+
+#get corrolations
+for state in all_df['state'].unique():
+    il = all_df[all_df['state'] == state]
+    il.sort_values(by=['latitude','longitude'])
+    small_df = il.drop(columns = ['state',
+       'station_name', 'elevation', 'latitude', 'longitude', 'mtd_prcp_normal',
+       'mtd_snow_normal', 'ytd_prcp_normal', 'ytd_snow_normal',
+       'dly_tavg_normal', 'dly_dutr_normal', 'dly_tmax_normal',
+       'dly_tmin_normal'])
+    corr_tab = corro_maker(small_df,'daily_mean_pm_2_5_concentration')
+    print("min", state, round(corr_tab.values.min(), 3))
+    print("mean", state, round(corr_tab.values.mean(), 3)) 
+    #print(state, corr_tab.values.max())
+
+
+#weather variables apply to all pm25 sites?
+il = all_df[all_df['state'] == "CA"]
+il.sort_values(by=['latitude','longitude'])
+temp_df = il.drop(columns = ['state','daily_mean_pm_2_5_concentration',
+       'station_name', 'elevation', 'latitude', 'longitude',
+       'mtd_snow_normal', 'ytd_prcp_normal', 'ytd_snow_normal',
+       'dly_tavg_normal', 'dly_dutr_normal', 'dly_tmax_normal',
+       'mtd_prcp_normal'])
+corroplot(temp_df, "CA", 'dly_tmin_normal', "tmin")
 
 
 
@@ -206,9 +216,11 @@ plt.suptitle("Smiling data and rolling window correlation")
 
 
 
-
+#not working right
+#https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.correlate.html 
 ######
 #cross-cor
+#####
 from scipy import signal
 pm25 = small_df.pivot_table(index='date', columns='site_name', 
                             values='daily_mean_pm_2_5_concentration', 
@@ -220,21 +232,21 @@ pm25.shape #(365, 30)
 sig_1 = pm25['4TH DISTRICT COURT']
 sig_2 = pm25['CARY GROVE HS']
 corr = signal.correlate(sig_1, sig_2, mode = 'same')/128
-
+corr = signal.correlate(sig_1, sig_2)
 #replicate
 sig = np.repeat([0., 1., 1., 0., 1., 0., 0., 1.], 128)
 sig_noise = sig + np.random.randn(len(sig))
 corr = signal.correlate(sig_noise, np.ones(128), mode='same') / 128
 
-clock = np.arange(64, len(sig_1), 128)
+#clock = np.arange(64, len(sig_1), 128)
 fig, (ax_orig, ax_noise, ax_corr) = plt.subplots(3, 1, sharex=True)
 ax_orig.plot(sig_1)
-ax_orig.plot(clock, sig_1[clock], 'ro')
+#ax_orig.plot(clock, sig_1[clock], 'ro')
 ax_orig.set_title('Original signal')
 ax_noise.plot(sig_2)
 ax_noise.set_title('Signal with noise')
 ax_corr.plot(corr)
-ax_corr.plot(clock, corr[clock], 'ro')
+#ax_corr.plot(clock, corr[clock], 'ro')
 ax_corr.axhline(0.5, ls=':')
 ax_corr.set_title('Cross-correlated with rectangular pulse')
 ax_orig.margins(0, 0.1)
