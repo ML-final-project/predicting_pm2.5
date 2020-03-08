@@ -48,7 +48,16 @@ df = merge(merged, temp2)
 #df[df['state'] == "IL"]
 #temp[temp['state'] == "CA"]
 #temp[temp['state'] == "CO"]
+#df = all_df 
 
+###
+#lag
+###
+
+
+###
+#add weekday and season
+###
 
 df['day_of_week'] = pd.to_datetime(df['date']).dt.dayofweek
 df['weekday'] = 0
@@ -86,7 +95,7 @@ for i in range(len(df['date'])):
         df['season'][i] = 1 #winter
 
 
-df.to_csv(os.path.join(PATH, 'merged/merged_plus_weekday_season.csv'))
+df.to_csv(os.path.join(PATH, 'merged/all_w_o_aod.csv'))
 
 
 
