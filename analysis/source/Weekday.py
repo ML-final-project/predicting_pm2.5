@@ -53,7 +53,8 @@ df = merge(merged, temp2)
 ###
 #lag
 ###
-
+df['mtd_prcp_normal_lag'] = df['mtd_prcp_normal'].shift(1)
+df['mtd_snow_normal_lag'] = df['mtd_snow_normal'].shift(1)
 
 ###
 #add weekday and season
@@ -95,7 +96,7 @@ for i in range(len(df['date'])):
         df['season'][i] = 1 #winter
 
 
-df.to_csv(os.path.join(PATH, 'merged/all_w_o_aod.csv'))
+df.to_csv(os.path.join(PATH, 'merged/all_w_aod.csv'))
 
 
 

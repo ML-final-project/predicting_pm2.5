@@ -93,29 +93,48 @@ for state in all_df['state'].unique():
 
 
 #get corrolations
-for state in all_df['state'].unique():
-    il = all_df[all_df['state'] == state]
-    il.sort_values(by=['latitude','longitude'])
-    small_df = il.drop(columns = ['state',
+def corrolation (all_df, variable):
+    for state in all_df['state'].unique():
+        il = all_df[all_df['state'] == state]
+        il.sort_values(by=['latitude','longitude'])
+        small_df = il.drop(il.columns.difference([variable,
+                        'date', 'site_name']), 1) 
+        corr_tab = corro_maker(small_df, variable)
+        #print(variable)
+        print("min", state, round(corr_tab.values.min(), 3), "mean", state, round(corr_tab.values.mean(), 3))
+        #print("mean", state, round(corr_tab.values.mean(), 3)) 
+        #print(state, corr_tab.values.max())
+
+#corrolation(all_df, 'daily_mean_pm_2_5_concentration')
+#https://stackoverflow.com/questions/45846189/how-to-delete-all-columns-in-dataframe-except-certain-ones 
+
+cols = ['daily_mean_pm_2_5_concentration', 
+        'mtd_prcp_normal',
+       'mtd_snow_normal', 'ytd_prcp_normal', 'ytd_snow_normal',
+       'dly_tavg_normal', 'dly_dutr_normal', 'dly_tmax_normal',
+       'dly_tmin_normal']
+for i in cols: 
+    print(i)
+    corrolation(all_df, i)
+
+smol = all_df.drop(all_df.columns.difference(['daily_mean_pm_2_5_concentration',
+                        'date', 'site_name']), 1) 
+Index(['date', 'site_name', 'daily_mean_pm_2_5_concentration', 'state',
        'station_name', 'elevation', 'latitude', 'longitude', 'mtd_prcp_normal',
        'mtd_snow_normal', 'ytd_prcp_normal', 'ytd_snow_normal',
        'dly_tavg_normal', 'dly_dutr_normal', 'dly_tmax_normal',
-       'dly_tmin_normal'])
-    corr_tab = corro_maker(small_df,'daily_mean_pm_2_5_concentration')
-    print("min", state, round(corr_tab.values.min(), 3))
-    print("mean", state, round(corr_tab.values.mean(), 3)) 
-    #print(state, corr_tab.values.max())
-
+       'dly_tmin_normal'],
+      dtype='object')
 
 #weather variables apply to all pm25 sites?
-il = all_df[all_df['state'] == "CA"]
+il = all_df[all_df['state'] == "IL"]
 il.sort_values(by=['latitude','longitude'])
 temp_df = il.drop(columns = ['state','daily_mean_pm_2_5_concentration',
        'station_name', 'elevation', 'latitude', 'longitude',
        'mtd_snow_normal', 'ytd_prcp_normal', 'ytd_snow_normal',
-       'dly_tavg_normal', 'dly_dutr_normal', 'dly_tmax_normal',
-       'mtd_prcp_normal'])
-corroplot(temp_df, "CA", 'dly_tmin_normal', "tmin")
+        'dly_dutr_normal', 'dly_tmax_normal','dly_tavg_normal',
+       'dly_tmin_normal'])
+corroplot(temp_df, "IL", 'mtd_prcp_normal', "weather")
 
 
 
@@ -123,11 +142,11 @@ corroplot(temp_df, "CA", 'dly_tmin_normal', "tmin")
 #https://towardsdatascience.com/better-heatmaps-and-correlation-matrix-plots-in-python-41445d0f2bec
 
 all_df = df.pivot_table(index='date', columns='site_name', 
-                            values=['daily_mean_pm_2_5_concentration','elevation',
-       'latitude', 'longitude', 'mtd_prcp_normal', 'mtd_snow_normal',
-       'ytd_prcp_normal', 'ytd_snow_normal', 'dly_tavg_normal',
-       'dly_dutr_normal', 'dly_tmax_normal', 'dly_tmin_normal'], 
-                            aggfunc='mean')
+                        values=['daily_mean_pm_2_5_concentration','elevation',
+                    'latitude', 'longitude', 'mtd_prcp_normal', 'mtd_snow_normal',
+                    'ytd_prcp_normal', 'ytd_snow_normal', 'dly_tavg_normal',
+                    'dly_dutr_normal', 'dly_tmax_normal', 'dly_tmin_normal'], 
+                     aggfunc='mean')
 
 all_corr = all_df.corr()
 
