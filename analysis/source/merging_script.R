@@ -79,54 +79,28 @@ merged <- pm25 %>%
   rename(state = state.x)
 write.csv(merged, str_c(data_out, "/merged_all.csv"), row.names=FALSE)
 
-##############
-## aod data ##
-##############
-
-aod_047 <- read_csv(make_path(config$data_path$aod,
-                              "2010ImputedOpticalDepth_047nm.csv"),
-                    col_names = FALSE) %>%
-  rename(date = X1,
-         aod47 = X2)
-
-aod_055 <- read_csv(make_path(config$data_path$aod,
-                              "2010ImputedOpticalDepth_055nm.csv"),
-                    col_names = FALSE) %>%
-  rename(date = X1,
-         aod55 = X2)
-
-merged_aod <- left_join(aod_047, aod_055, by = "date") %>%
-  right_join(., merged, by = "date")
-write.csv(merged_aod, str_c(data_out, "/merged_noaa_pm25_aod.csv"))
-
-################################################
-## adding lags and seasons/weekday indicators ##
-################################################
-
-lagmatrix <- function(x,max.lag) embed(c(rep(NA,max.lag), x), max.lag+1)
-lag_prcp <- data.frame(lagmatrix(merged_aod$mtd_prcp_normal, 1)) %>%
-  select(X2) %>%
-  rename(mtd_prcp_normal_lag1 = X2)
-lag_snow <- data.frame(lagmatrix(merged_aod$mtd_snow_normal, 1)) %>%
-  select(X2) %>%
-  rename(mtd_snow_normal_lag1 = X2)
-merge_lag <- cbind(merged_aod, lag_prcp, lag_snow)
-
 #######################
 ## linear regression ##
 #######################
 
-reg_vars <- merge_lag %>%
-  select(elevation, contains("normal"), aod47, aod55) %>%
+merged_all <- read_csv(make_path(config$data_path$merge,
+                   "all_w_aod.csv")) %>%
+  select(-X1) %>%
+  na.omit()
+
+reg_vars <- merged_all %>%
+  select(elevation, longitude, latitude, contains("normal"),
+         aod_value47, aod_value55, day_of_week, weekday, season,
+         aod_value47) %>%
   names() %>%
   paste(collapse = " + ")
 
-summary(plm(as.formula(paste0("daily_mean_pm_2_5_concentration ~ ", reg_vars)),
-            data = merge_lag,
-            index = c("date"),
-            model = "pooling",
-            effect = "twoways"))
+lm_mod <- lm(as.formula(paste0("daily_mean_pm_2_5_concentration ~ ", reg_vars,
+                                 "+ aod_value47:mtd_prcp_normal +
+                               aod_value55:mtd_prcp_normal +
+                               aod_value47:dly_tavg_normal +
+                               aod_value55:dly_tavg_normal")),
+   data = merged_all)
 
-# for markdown
-# library(stargazer)
-# stargazer(merge_lag)
+stargazer(lm_mod)
+summary(lm_mod)
