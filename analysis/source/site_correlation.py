@@ -106,7 +106,7 @@ def corrolation (all_df, variable):
         #print(state, corr_tab.values.max())
 
 #corrolation(all_df, 'daily_mean_pm_2_5_concentration')
-#https://stackoverflow.com/questions/45846189/how-to-delete-all-columns-in-dataframe-except-certain-ones 
+#cite: https://stackoverflow.com/questions/45846189/how-to-delete-all-columns-in-dataframe-except-certain-ones 
 
 cols = ['daily_mean_pm_2_5_concentration', 
         'mtd_prcp_normal',
@@ -117,29 +117,21 @@ for i in cols:
     print(i)
     corrolation(all_df, i)
 
-smol = all_df.drop(all_df.columns.difference(['daily_mean_pm_2_5_concentration',
-                        'date', 'site_name']), 1) 
-Index(['date', 'site_name', 'daily_mean_pm_2_5_concentration', 'state',
-       'station_name', 'elevation', 'latitude', 'longitude', 'mtd_prcp_normal',
-       'mtd_snow_normal', 'ytd_prcp_normal', 'ytd_snow_normal',
-       'dly_tavg_normal', 'dly_dutr_normal', 'dly_tmax_normal',
-       'dly_tmin_normal'],
-      dtype='object')
 
-#weather variables apply to all pm25 sites?
-il = all_df[all_df['state'] == "IL"]
-il.sort_values(by=['latitude','longitude'])
-temp_df = il.drop(columns = ['state','daily_mean_pm_2_5_concentration',
-       'station_name', 'elevation', 'latitude', 'longitude',
-       'mtd_snow_normal', 'ytd_prcp_normal', 'ytd_snow_normal',
-        'dly_dutr_normal', 'dly_tmax_normal','dly_tavg_normal',
-       'dly_tmin_normal'])
-corroplot(temp_df, "IL", 'mtd_prcp_normal', "weather")
+#summary statistics table 
+for state in all_df['state'].unique():
+    ca = all_df[all_df['state'] == state]
+    ca_stats = pd.DataFrame({"mean" : round(ca.mean(),3)})      
+    ca_stats["min"] = ca.min()
+    ca_stats["max"] = ca.max()
+    ca_stats.drop(["daily_mean_pm_2_5_concentration",'latitude','longitude'],
+                axis = 0, inplace = True)
+    ca_stats.to_csv(os.path.join(out_path, state+'_NOAA_stats.csv'))
 
 
 
 
-#https://towardsdatascience.com/better-heatmaps-and-correlation-matrix-plots-in-python-41445d0f2bec
+#cite: https://towardsdatascience.com/better-heatmaps-and-correlation-matrix-plots-in-python-41445d0f2bec
 
 all_df = df.pivot_table(index='date', columns='site_name', 
                         values=['daily_mean_pm_2_5_concentration','elevation',
@@ -185,9 +177,9 @@ plt.show()
 fig, ax = plt.subplots()
 ax.scatter(x = df['date'], y = df['daily_mean_pm_2_5_concentration'])
 
-plt.scatter(x = df2["season"], y = df2['daily_mean_pm_2_5_concentration'])
+#plt.scatter(x = df2["season"], y = df2['daily_mean_pm_2_5_concentration'])
 
-plt.scatter(x = df2['mtd_prcp_normal'], y = df2['daily_mean_pm_2_5_concentration'])
+#plt.scatter(x = df2['mtd_prcp_normal'], y = df2['daily_mean_pm_2_5_concentration'])
 
 
 ####
