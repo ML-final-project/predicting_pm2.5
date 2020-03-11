@@ -1,0 +1,10 @@
+,mean,min,max
+elevation,238.033,9.4,929.6
+mtd_prcp_normal,0.669,0.0,5.12
+mtd_snow_normal,0.001,0.0,0.6
+ytd_prcp_normal,10.44,0.08,21.24
+ytd_snow_normal,0.014,0.0,0.8
+dly_tavg_normal,65.479,45.4,83.0
+dly_dutr_normal,22.896,14.9,33.0
+dly_tmax_normal,76.927,55.6,98.8
+dly_tmin_normal,54.031,33.4,68.5
