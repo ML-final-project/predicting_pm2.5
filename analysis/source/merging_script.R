@@ -4,7 +4,6 @@ library(tidyverse)
 library(lubridate)
 library(snakecase)
 library(sf)
-library(plm)
 
 setwd("~/final_project/")
 
@@ -102,5 +101,6 @@ lm_mod <- lm(as.formula(paste0("daily_mean_pm_2_5_concentration ~ ", reg_vars,
                                aod_value55:dly_tavg_normal")),
    data = merged_all)
 
-stargazer(lm_mod)
-summary(lm_mod)
+lm_mod2 <- lm(as.formula(paste0("daily_mean_pm_2_5_concentration ~ ", reg_vars,
+                                " + factor(site_name)")),
+              data = merged_all)
