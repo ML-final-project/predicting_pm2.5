@@ -11,7 +11,6 @@ make_path <- is_git_root$make_fix_file()
 config <- yaml.load_file(make_path("analysis/config.yml"))
 out_path <- make_path(config$build_path)
 data_out <- make_path(config$data_path$merge)
-source(str_c(config$group_code, "prelim.R"))
 
 noaa <- read_csv(make_path(config$data_path$noaa,
                            "Mass2010Normal.csv")) %>%
