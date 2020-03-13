@@ -14,47 +14,61 @@ aod_name = ['Anchorage_047file.csv', 'Anchorage_055file.csv',
             'Hillsborough_047file.csv', 'Hillsborough_055file.csv',
             'Orange_047file.csv', 'Orange_055file.csv']
 
-aods = []
-for filename in aod_name:
-    df = pd.read_csv(os.path.join(PATH, 'AOD/'+filename))
-    aods.append(df)
+file_47 = '{}_047file.csv'
+file_55 = '{}_055file.csv'
+city = ['Anchorage', 'Arapahoe', 'Cook', 'Hillsborough', 'Orange']
 
-for i in list(range(len(aods))):
-    aods[i].drop(columns = 'aod_type', inplace = True )
+def build_fname(base, file):
+    return base.format(file)
 
+aod_name_47 = []
+for city_name in city:
+    aod_name_47.append(build_fname(file_47, city_name))
+aod_name_55 = []
+for city_name in city:
+    aod_name_55.append(build_fname(file_55, city_name))
+
+def add_aod(aod_name, nm):
+    aods = []
+    for filename in aod_name:
+        df = pd.read_csv(os.path.join(PATH, 'AOD/'+filename))
+        aods.append(df)
+
+    for i in list(range(len(aods))):
+        aods[i].drop(columns = 'aod_type', inplace = True )
+        aods[i].rename(columns = {'aod_value': 'aod_value'+nm}, inplace=True)
+
+    concated = aods[0].append(aods[1]).append(aods[2]).append(aods[3]).append(aods[4])
+    return concated
+
+'''
 for i in [0,2,4,6,8]:
     aods[i].rename(columns = {'aod_value': 'aod_value47'}, inplace=True)
 
 for i in [1,3,5,7,9]:
     aods[i].rename(columns = {'aod_value': 'aod_value55'}, inplace=True)
 
-#for i in range(len(aods)):
-#    aods[i].append(aods[i+1])
-temp = aods[0].append(aods[2]).append(aods[4]).append(aods[6]).append(aods[8])
-temp2 = aods[1].append(aods[3]).append(aods[5]).append(aods[7]).append(aods[9])
-#temp3 = temp2.append(aods[7]).append(aods[8]).append(aods[9])
+    temp = aods[0].append(aods[2]).append(aods[4]).append(aods[6]).append(aods[8])
+    temp2 = aods[1].append(aods[3]).append(aods[5]).append(aods[7]).append(aods[9])
+ '''   
 
-#df = all_df.merge(temp3, on = ["date", "state"], how = 'outer')
 
 def merge (df1, df2):
     df = df1.merge(df2, on = ["date", "state"], how = 'left')
     return df
 
-merged = merge(all_df, temp)
-df = merge(merged, temp2)
 
-#all_df['site_name'].head()
-#check
-#df[df['state'] == "IL"]
-#temp[temp['state'] == "CA"]
-#temp[temp['state'] == "CO"]
-#df = all_df 
+merged = merge(all_df, add_aod(aod_name_47, "47"))
+df = merge(merged, add_aod(aod_name_55, "55"))
+
 
 ###
 #lag
 ###
 df['mtd_prcp_normal_lag'] = df['mtd_prcp_normal'].shift(1)
 df['mtd_snow_normal_lag'] = df['mtd_snow_normal'].shift(1)
+df['mtd_prcp_normal_lag2'] = df['mtd_prcp_normal'].shift(2)
+df['mtd_snow_normal_lag2'] = df['mtd_snow_normal'].shift(2)
 
 ###
 #add weekday and season
@@ -98,20 +112,3 @@ for i in range(len(df['date'])):
 
 df.to_csv(os.path.join(PATH, 'merged/all_w_aod.csv'))
 
-
-
-
-#working
-df["elevation"].max() 
-'''
-Index(['date', 'site_name', 'daily_mean_pm_2_5_concentration', 'state',
-       'station_name', 'elevation', 'latitude', 'longitude', 'mtd_prcp_normal',
-       'mtd_snow_normal', 'ytd_prcp_normal', 'ytd_snow_normal',
-       'dly_tavg_normal', 'dly_dutr_normal', 'dly_tmax_normal',
-       'dly_tmin_normal', 'day_of_week', 'weekday', 'season'],
-      dtype='object')
-'''
-for col in df.columns:
-    print(col)
-    print(df[col].min())
-    print(df[col].max())
